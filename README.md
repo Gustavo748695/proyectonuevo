@@ -1,5 +1,5 @@
--- Cargar los datos del archivo CSV
-data = LOAD '/user/cloudera/pig_wordcount/comentarios.csv'
+-- Cargar los datos desde el archivo CSV
+data = LOAD '/user/cloudera/pig_wordcount/comentario.csv' 
     USING PigStorage(',') 
     AS (id:int, cliente:chararray, direccion:chararray, comentario:chararray);
 
@@ -18,10 +18,21 @@ cuentas = FOREACH palabras_agrupadas GENERATE group AS palabra, COUNT(palabras) 
 -- Ordenar por frecuencia descendente
 ordenadas = ORDER cuentas BY total DESC;
 
--- Tomar solo las 3 más repetidas
+-- Tomar solo las 3 palabras más frecuentes
 top3 = LIMIT ordenadas 3;
 
--- Guardar el resultado
+-- Guardar el resultado en HDFS
 STORE top3 INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
 
-hdfs dfs -put comentarios.csv /user/cloudera/pig_wordcount/
+#!/bin/bash
+# 0_preparar_hdfs.sh
+
+# Crear un directorio en HDFS si no existe
+hdfs dfs -mkdir -p /user/cloudera/pig_wordcount
+
+# Subir el archivo CSV a HDFS
+hdfs dfs -put /home/cloudera/workspace/hadoop_course-master/pig/wordcount/comentario.csv /user/cloudera/pig_wordcount/
+
+# Verificar si el archivo se subió correctamente
+hdfs dfs -ls /user/cloudera/pig_wordcount
+
