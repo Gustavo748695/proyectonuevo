@@ -24,3 +24,4 @@ top3 = LIMIT ordenadas 3;
 -- Guardar el resultado
 STORE top3 INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
 
+hdfs dfs -put comentarios.csv /user/cloudera/pig_wordcount/
