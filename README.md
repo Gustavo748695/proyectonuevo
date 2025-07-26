@@ -30,4 +30,5 @@ top3_como_comentario = FOREACH (GROUP top3 ALL) GENERATE CONCAT(CONCAT(FLATTEN(t
 
 -- Guardar resultado
 STORE top3_como_comentario INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
+;
 
