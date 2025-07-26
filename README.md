@@ -30,5 +30,3 @@ top3 = LIMIT ordenadas 3;
 -- Guardar el resultado en HDFS
 STORE top3 INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
 
-STORE top3 INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
-
