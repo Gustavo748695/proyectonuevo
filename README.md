@@ -3,30 +3,31 @@ data = LOAD '/user/cloudera/pig_wordcount/comentario.csv'
     USING PigStorage(',') 
     AS (id:int, cliente:chararray, direccion:chararray, comentario:chararray);
 
--- Extraer la columna comentario
+-- Extraer los comentarios
 comentarios = FOREACH data GENERATE comentario;
 
--- Separar cada comentario en palabras
+-- Tokenizar los comentarios en palabras
 palabras = FOREACH comentarios GENERATE FLATTEN(TOKENIZE(comentario)) AS palabra;
 
--- Filtrar las palabras para que solo contengan caracteres alfabéticos
-palabras_filtradas = FILTER palabras BY (chararray) (wordmatches(palabra, '^[a-zA-Z]+$'));
+-- Filtrar solo palabras alfabéticas
+palabras_limpias = FILTER palabras BY (wordmatches(palabra, '^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$'));
 
--- Convertir las palabras a minúsculas para normalizar
-palabras_normalizadas = FOREACH palabras_filtradas GENERATE LOWER(palabra) AS palabra;
+-- Normalizar (minúsculas)
+palabras_norm = FOREACH palabras_limpias GENERATE LOWER(palabra) AS palabra;
 
--- Agrupar las palabras por su valor
-palabras_agrupadas = GROUP palabras_normalizadas BY palabra;
+-- Contar la frecuencia de cada palabra
+agrupadas = GROUP palabras_norm BY palabra;
+conteo = FOREACH agrupadas GENERATE group AS palabra, COUNT(palabras_norm) AS total;
 
--- Contar las repeticiones de cada palabra
-cuentas = FOREACH palabras_agrupadas GENERATE group AS palabra, COUNT(palabras_normalizadas) AS total;
+-- Ordenar por cantidad descendente
+ordenadas = ORDER conteo BY total DESC;
 
--- Ordenar por frecuencia descendente
-ordenadas = ORDER cuentas BY total DESC;
-
--- Tomar solo las 3 palabras más frecuentes
+-- Tomar las 3 más frecuentes
 top3 = LIMIT ordenadas 3;
 
--- Guardar el resultado en HDFS
-STORE top3 INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
+-- Unir las 3 palabras más frecuentes en un solo string/comentario
+top3_como_comentario = FOREACH (GROUP top3 ALL) GENERATE CONCAT(CONCAT(FLATTEN(top3.palabra).$0, ' '), CONCAT(FLATTEN(top3.palabra).$1, CONCAT(' ', FLATTEN(top3.palabra).$2))) AS comentario;
+
+-- Guardar resultado
+STORE top3_como_comentario INTO '/user/cloudera/pig_wordcount/out' USING PigStorage(',');
 
